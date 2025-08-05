@@ -1,0 +1,108 @@
+# backend/docker-compose.yml
+
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:13-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-resumehithub}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-password}
+      POSTGRES_DB: ${POSTGRES_DB:-resume_hithub}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-resumehithub}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-resumehithub}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-resume_hithub}
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      SECRET_KEY: ${SECRET_KEY:-your-secret-key-here}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+    volumes:
+      - ./app:/app/app  # Mount app directory for hot reload
+      - ./alembic:/app/alembic
+      - uploads:/app/uploads
+    ports:
+      - "8000:8000"
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  celery-worker:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-resumehithub}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-resume_hithub}
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    volumes:
+      - ./app:/app/app
+    command: celery -A app.core.celery_app worker --loglevel=info
+
+  celery-beat:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-resumehithub}:${POSTGRES_PASSWORD:-password}@postgres:5432/${POSTGRES_DB:-resume_hithub}
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    volumes:
+      - ./app:/app/app
+    command: celery -A app.core.celery_app beat --loglevel=info
+
+  flower:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      - redis
+    environment:
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    ports:
+      - "5555:5555"
+    command: celery -A app.core.celery_app flower
+
+volumes:
+  postgres_data:
+  redis_data:
+  uploads:

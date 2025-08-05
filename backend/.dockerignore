@@ -1,0 +1,100 @@
+# backend/.dockerignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.log
+.git
+.gitignore
+.mypy_cache
+.pytest_cache
+.hypothesis
+
+# Virtual environments
+bin/
+include/
+lib/
+lib64/
+share/
+pyvenv.cfg
+
+# Environment files
+.env
+.env.*
+.env.local
+.env.development
+.env.test
+.env.production
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Project specific
+uploads/
+logs/
+*.db
+*.sqlite
+*.sqlite3
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Tests
+tests/
+test_*.py
+*_test.py
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+
+# Build files
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+
+# Alembic local files
+alembic.ini.local
+alembic/versions/*.pyc
