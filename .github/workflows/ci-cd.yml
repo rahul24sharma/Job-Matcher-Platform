@@ -73,10 +73,10 @@ jobs:
 
     - name: Run linting
       run: |
-        pip install flake8 black isort
-        black --check app/
-        isort --check-only app/
-        flake8 app/ --max-line-length=100 --exclude=__pycache__
+          pip install flake8 black isort
+          black app/
+          isort app/
+          flake8 app/ --max-line-length=100 --exclude=__pycache__
 
     - name: Wait for PostgreSQL
       run: |

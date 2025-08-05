@@ -1,1 +1,4 @@
 backend/app/.env
+__pycache__/
+celerybeat-schedule*
+*.pyc
