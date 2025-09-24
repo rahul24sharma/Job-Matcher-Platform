@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, Float, DateTime, Boolean, JSON
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, Float, DateTime, Boolean, JSON, func
 from enum import Enum
 from sqlalchemy.orm import relationship, declarative_base
 from datetime import datetime
@@ -32,7 +32,7 @@ class User(Base):
     skills = relationship("Skill", back_populates="user")
     matches = relationship("Match", back_populates="user")
     tasks = relationship("TaskStatus", back_populates="user")
-
+    profile = relationship("Profile", back_populates="user", uselist=False)
 
 class Skill(Base):
     __tablename__ = "skills"
@@ -103,5 +103,48 @@ class TaskStatus(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     completed_at = Column(DateTime, nullable=True)
     
-    # Relationship
     user = relationship("User", back_populates="tasks")
+
+class Profile(Base):
+    __tablename__ = "profiles"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
+    
+    full_name = Column(String(255), nullable=True)
+    phone = Column(String(20), nullable=True)
+    location = Column(String(255), nullable=True)
+    title = Column(String(255), nullable=True)
+    bio = Column(Text, nullable=True)
+    
+    linkedin_url = Column(String(500), nullable=True)
+    portfolio_url = Column(String(500), nullable=True)
+    github_username = Column(String(100), nullable=True)
+    
+    resume_path = Column(String(500), nullable=True)
+    resume_uploaded_at = Column(DateTime(timezone=True), nullable=True)
+    
+    skills = Column(Text, nullable=True)  
+    
+    is_complete = Column(Boolean, default=False)
+    completion_percentage = Column(Integer, default=0)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    user = relationship("User", back_populates="profile")
+    
+    def calculate_completion(self):
+        """Calculate profile completion percentage"""
+        fields = [
+            self.full_name,
+            self.phone,
+            self.location,
+            self.title,
+            self.bio,
+            self.linkedin_url,
+            self.resume_path,
+            self.skills
+        ]
+        filled = sum(1 for field in fields if field)
+        return int((filled / len(fields)) * 100)

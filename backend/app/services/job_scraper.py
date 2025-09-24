@@ -75,7 +75,7 @@ class JobScraperService:
         """
         Scrape jobs from Remotive.io (completely free, no auth needed)
         """
-        url = "http://remotive.io/api/remote-jobs"
+        url = "https://remotive.io/api/remote-jobs"
         params = {"limit": limit, "category": "software-dev"}
     
         for attempt in range(3):
@@ -224,8 +224,8 @@ class JobScraperService:
         Get your free key at: https://developer.adzuna.com/
         """
         # You need to sign up for free API keys
-        APP_ID = "your_adzuna_app_id"  # Replace with your ID
-        APP_KEY = "your_adzuna_app_key"  # Replace with your key
+        APP_ID = "29d697e9"  # Replace with your ID
+        APP_KEY = "7e7d8a4fe10852570963835adccd53ac"  # Replace with your key
         
         if APP_ID == "your_adzuna_app_id":
             logger.warning("Adzuna API keys not configured. Skipping...")

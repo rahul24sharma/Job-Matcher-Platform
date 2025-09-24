@@ -5,9 +5,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 import logging
 
+
 # Import routers
 from app.api.api import api_router
-from app.api.endpoints import auth, resume, github, jobs, job_scraping
+from app.api.endpoints import auth, resume, github, jobs, job_scraping, profile
 
 # Import database session for health check
 from app.db.session import SessionLocal
@@ -28,7 +29,7 @@ app = FastAPI(
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Add your frontend URLs
+    allow_origins=["http://localhost:5173"],  # Add your frontend URLs
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -41,6 +42,7 @@ app.include_router(resume.router)
 app.include_router(github.router)
 app.include_router(jobs.router)
 app.include_router(job_scraping.router)
+app.include_router(profile.router)
 
 # Root endpoint
 @app.get("/")
