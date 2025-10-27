@@ -7,12 +7,11 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
-# ✅ Create Redis connection
 try:
     redis_client = redis.Redis(
         host='localhost',
         port=6379,
-        db=1,  # ✅ Using DB 1 for caching (DB 0 is for Celery)
+        db=1, 
         decode_responses=True
     )
     redis_client.ping()
@@ -21,7 +20,6 @@ except Exception as e:
     logger.error(f"[CACHE] Redis connection failed: {e}")
     redis_client = None
 
-# ✅ Serializer to handle datetime, Decimal, and ORM-like objects
 def json_serializer(obj):
     if isinstance(obj, (datetime.datetime, datetime.date)):
         return obj.isoformat()
@@ -29,7 +27,6 @@ def json_serializer(obj):
         return float(obj)
     return str(obj)
 
-# ✅ Cache Get
 def cache_get(key: str):
     """Retrieve a value from cache and safely decode JSON."""
     if not redis_client:
@@ -46,7 +43,6 @@ def cache_get(key: str):
         logger.error(f"[CACHE] Cache get error for key '{key}': {e}")
         return None
 
-# ✅ Cache Set with Safe Serialization
 def cache_set(key: str, value, ttl: int = 3600):
     """Store a value in cache with safe serialization."""
     if not redis_client:
@@ -61,7 +57,6 @@ def cache_set(key: str, value, ttl: int = 3600):
         logger.error(f"[CACHE] Cache set error for key '{key}': {e}")
         return False
 
-# ✅ Cache Delete
 def cache_delete(key: str):
     """Delete a value from cache."""
     if not redis_client:
@@ -78,7 +73,6 @@ def cache_delete(key: str):
         logger.error(f"[CACHE] Cache delete error for key '{key}': {e}")
         return False
 
-# ✅ Provide a unified cache_manager object
 class CacheManager:
     def get(self, key: str):
         return cache_get(key)
@@ -104,5 +98,4 @@ class CacheManager:
             logger.error(f"[CACHE] Pattern delete error: {e}")
             return 0
 
-# ✅ Instantiate cache_manager
 cache_manager = CacheManager()
