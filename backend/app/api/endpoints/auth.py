@@ -16,7 +16,6 @@ from app.core.dependencies import get_current_active_user
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-# Request/Response models
 class UserRegister(BaseModel):
     email: EmailStr
     password: str
@@ -44,7 +43,6 @@ async def register(
     user_data: UserRegister,
     db: Session = Depends(get_db)
 ):
-    # Check if user exists
     db_user = db.query(User).filter(User.email == user_data.email).first()
     if db_user:
         raise HTTPException(
@@ -52,7 +50,6 @@ async def register(
             detail="Email already registered"
         )
     
-    # Create new user
     hashed_password = get_password_hash(user_data.password)
     db_user = User(
         email=user_data.email,
@@ -70,7 +67,6 @@ async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: Session = Depends(get_db)
 ):
-    # Authenticate user
     user = db.query(User).filter(User.email == form_data.username).first()
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
@@ -79,7 +75,6 @@ async def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    # Create access token
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": user.email},
@@ -107,7 +102,6 @@ async def logout(
         "user": current_user.email
     }
 
-# Optional: Add a health check endpoint
 @router.get("/health", response_model=MessageResponse)
 async def health_check():
     """
