@@ -1,5 +1,3 @@
-# app/api/endpoints/job_scraping.py
-
 from fastapi import APIRouter, Depends, BackgroundTasks, HTTPException
 from sqlalchemy.orm import Session
 from app.db.session import get_db
@@ -24,7 +22,6 @@ async def trigger_job_scraping(
     """
     Manually trigger job scraping (admin only in production)
     """
-    # Start async task
     task = scrape_all_jobs_task.delay()
     
     return {
@@ -59,14 +56,12 @@ async def get_scraping_stats(
     """
     Get job scraping statistics
     """
-    # Count jobs by source
     stats = db.query(
         Job.source,
         func.count(Job.id).label('count'),
         func.max(Job.created_at).label('latest')
     ).group_by(Job.source).all()
     
-    # Count jobs by date
     today = datetime.utcnow().date()
     today_jobs = db.query(Job).filter(
         func.date(Job.created_at) == today
@@ -89,7 +84,7 @@ async def get_scraping_stats(
             }
             for stat in stats
         ],
-        "last_scrape": None  # You can track this separately
+        "last_scrape": None  
     }
 
 @router.get("/preview/{source}")
@@ -105,7 +100,6 @@ async def preview_source_jobs(
     
     try:
         if source == "remotive":
-            # Just fetch without saving
             url = "https://remotive.io/api/remote-jobs"
             response = requests.get(url, params={"limit": 5})
             response.raise_for_status()
@@ -130,7 +124,7 @@ async def preview_source_jobs(
             response.raise_for_status()
             jobs = response.json()[:5]
 
-        elif source == "arbeitnow":  # ← ADD THIS NEW BLOCK
+        elif source == "arbeitnow":  
             url = "https://www.arbeitnow.com/api/job-board-api"
             response = requests.get(url, timeout=10)
             response.raise_for_status()
@@ -178,7 +172,7 @@ async def test_scraper_direct(
             count = scraper.scrape_theirstack_jobs(limit=limit)
         elif source == "adzuna":
             count = scraper.scrape_adzuna_jobs(limit=limit)
-        elif source == "arbeitnow":  # ← ADD THIS NEW BLOCK
+        elif source == "arbeitnow":  
             count = scraper.scrape_arbeitnow_jobs(limit=limit)
 
         else:
@@ -202,10 +196,8 @@ async def cleanup_duplicate_jobs(
     """
     Remove duplicate jobs based on external_id
     """
-    # Find and remove duplicates
     from sqlalchemy import text
     
-    # Keep the oldest job for each external_id
     result = db.execute(text("""
         DELETE FROM jobs 
         WHERE id NOT IN (
