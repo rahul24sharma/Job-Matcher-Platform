@@ -1,4 +1,3 @@
-# app/api/endpoints/jobs.py
 from app.core.cache import cache_get, cache_set, cache_delete
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -14,13 +13,12 @@ import logging
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 logger = logging.getLogger(__name__)
 
-# Request/Response models
 class JobCreate(BaseModel):
     title: str
     company: str
     location: str
     description: str
-    required_skills: str  # Comma-separated skills
+    required_skills: str  
     url: Optional[str] = None
     remote: bool = False
     salary_min: Optional[int] = None
@@ -74,11 +72,9 @@ def _compute_matches(db: Session, current_user: User) -> List[Dict]:
     logger.info(f"Calculating new matches for user {current_user.id}")
     matcher = JobMatcher(db)
 
-    # Run matching
     matches = matcher.match_jobs_for_user(current_user.id)
 
     if not matches:
-        # Optional diagnostics similar to your original implementation
         from app.db.models import Skill
         user_skills = db.query(Skill).filter(Skill.user_id == current_user.id).count()
         if user_skills == 0:
@@ -94,13 +90,12 @@ def _compute_matches(db: Session, current_user: User) -> List[Dict]:
             )
         return []
 
-    success = cache_set(cache_key, matches, ttl=21600)  # 6 hours
+    success = cache_set(cache_key, matches, ttl=21600)  
     logger.info(f"[CACHE] Saving matches for user {current_user.id}: {'SUCCESS' if success else 'FAILED'}")
 
     return matches[:20]
 
 
-# ----- Static routes FIRST -----
 
 @router.get("/match", response_model=List[JobMatchResponse])
 async def get_fresh_matches(
@@ -182,7 +177,7 @@ async def get_match_statistics(
 
 @router.get("/search/skills")
 async def search_jobs_by_skills(
-    skills: str,  # Comma-separated skills
+    skills: str, 
     db: Session = Depends(get_db)
 ):
     """
@@ -253,7 +248,6 @@ async def get_all_jobs(
     return jobs
 
 
-# ----- Dynamic route LAST to avoid hijacking static paths -----
 @router.get("/{job_id}", response_model=JobResponse)
 async def get_job(
     job_id: int,
