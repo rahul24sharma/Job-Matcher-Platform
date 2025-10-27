@@ -14,9 +14,7 @@ from app.services.github_analyzer import GitHubAnalyzer
 router = APIRouter(prefix="/github", tags=["github"])
 logger = logging.getLogger(__name__)
 
-# -------------------------
-# Schemas
-# -------------------------
+
 class GitHubConnectRequest(BaseModel):
     username: str
 
@@ -34,9 +32,7 @@ class MessageResponse(BaseModel):
     message: str
     data: Optional[Dict] = None
 
-# -------------------------
-# Simple cache using TaskStatus (no schema changes)
-# -------------------------
+
 def save_profile_cache(db: Session, user_id: int, result: dict):
     db.add(TaskStatus(
         user_id=user_id,
@@ -60,9 +56,7 @@ def get_profile_cache(db: Session, user_id: int):
     )
     return row.result if row else None
 
-# -------------------------
-# Endpoints
-# -------------------------
+
 @router.post("/connect", response_model=MessageResponse)
 async def connect_github(
     request: GitHubConnectRequest,
@@ -85,7 +79,6 @@ async def connect_github(
         )
 
     try:
-        # Save username first
         current_user.github_username = request.username
         db.commit()
 
@@ -101,7 +94,6 @@ async def connect_github(
             db.add(Skill(name=f"github_{sk}", user_id=current_user.id))
         db.commit()
 
-        # Cache the full result for fast GET /profile
         save_profile_cache(db, current_user.id, result)
 
         return {
@@ -139,7 +131,7 @@ async def get_github_profile(
         return None
 
     cached = get_profile_cache(db, current_user.id)
-    return cached  # may be None if never analyzed
+    return cached  
 
 @router.post("/analyze", response_model=GitHubProfileResponse)
 async def analyze_github_now(
@@ -158,7 +150,6 @@ async def analyze_github_now(
         analyzer = GitHubAnalyzer(db)
         result = analyzer.analyze_profile(current_user.github_username)
 
-        # Replace github_* skills
         db.query(Skill).filter(
             Skill.user_id == current_user.id, Skill.name.like("github_%")
         ).delete()
@@ -166,7 +157,6 @@ async def analyze_github_now(
             db.add(Skill(name=f"github_{sk}", user_id=current_user.id))
         db.commit()
 
-        # Update cache
         save_profile_cache(db, current_user.id, result)
         return result
 
