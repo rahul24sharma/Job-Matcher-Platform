@@ -1,4 +1,3 @@
-# app/api/profile.py
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -27,7 +26,6 @@ async def get_my_profile(
     profile = profile_service.get_profile_by_user_id(db, current_user.id)
     
     if not profile:
-        # Create empty profile if doesn't exist
         from app.db.models import Profile
         profile = Profile(
             user_id=current_user.id,
@@ -38,7 +36,6 @@ async def get_my_profile(
         db.commit()
         db.refresh(profile)
     
-    # Convert to dict and add email
     profile_data = profile.__dict__
     profile_data['email'] = current_user.email
     return ProfileResponse(**profile_data)
