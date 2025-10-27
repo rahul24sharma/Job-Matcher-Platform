@@ -1,4 +1,3 @@
-# app/api/endpoints/resume.py
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.db.session import get_db
@@ -20,27 +19,21 @@ async def upload_resume(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    # Save file
     file_path = os.path.join(UPLOAD_DIR, f"{current_user.id}_{file.filename}")
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    # Extract text & skills
     text = extract_text_from_pdf(file_path)
     raw_skills = extract_skills(text, db)
-    skills = clean_skills(raw_skills)  # ← normalize here
+    skills = clean_skills(raw_skills)  
 
-    # Store resume path
     current_user.resume_path = file_path
     db.commit()
 
-    # Replace user's skills (transaction-like block)
     db.query(Skill).filter(Skill.user_id == current_user.id).delete()
     db.add_all([Skill(name=s, user_id=current_user.id) for s in skills])
     db.commit()
 
-    # (Optional) expand your master list automatically
-    # save_new_skills(skills, db)
 
     return {
         "message": "Resume uploaded & parsed successfully",
